@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en" class="antialiased">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BodyMath Fitness — Your Personal Fitness & Nutrition Coach</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./style.css">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .display-font { font-family: 'Space Grotesk', sans-serif; }
+
+    /* ── Hero ── */
+    .hero-section {
+      position: relative;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+      overflow: hidden;
+    }
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,255,255,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(0,255,255,0.07);
+      border: 1px solid rgba(0,255,255,0.2);
+      border-radius: 9999px;
+      padding: 0.3rem 1rem;
+      font-size: 0.75rem;
+      color: #67e8f9;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 700;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 40%, #818cf8 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: 1.125rem;
+      color: #94a3b8;
+      max-width: 520px;
+      margin: 1rem auto 0;
+      line-height: 1.7;
+    }
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin-top: 2.5rem;
+      flex-wrap: wrap;
+    }
+    .hero-stat-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ffff, #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-stat-label {
+      font-size: 0.72rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-top: 0.1rem;
+    }
+
+    /* ── Layout ── */
+    .app-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 2rem;
+      align-items: start;
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 2rem 4rem;
+    }
+    @media (max-width: 900px) {
+      .app-layout { grid-template-columns: 1fr; padding: 0 1rem 3rem; }
+    }
+
+    /* ── Sidebar form ── */
+    .sidebar-form {
+      position: sticky;
+      top: 1.5rem;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(148,163,184,0.12);
+      border-radius: 1.25rem;
+      backdrop-filter: blur(20px);
+      overflow: hidden;
+    }
+    .sidebar-header {
+      padding: 1.5rem 1.5rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      background: linear-gradient(135deg, rgba(0,255,255,0.04), rgba(129,140,248,0.04));
+    }
+    .sidebar-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+    .sidebar-body {
+      padding: 1.25rem 1.5rem;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,255,255,0.2) transparent;
+    }
+
+    /* ── Section dividers inside form ── */
+    .form-section {
+      padding-top: 1.25rem;
+      margin-top: 1.25rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .form-section:first-child { border-top: none; padding-top: 0; margin-top: 0; }
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #00ffff;
+      opacity: 0.7;
+      margin-bottom: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(0,255,255,0.12);
+    }
+
+    /* ── Inputs ── */
+    .field-group { margin-bottom: 0.875rem; }
+    .field-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      margin-bottom: 0.35rem;
+      font-weight: 500;
+    }
+    .hp-input {
+      width: 100%;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(148,163,184,0.15);
+      color: #f1f5f9;
+      padding: 0.55rem 0.85rem;
+      border-radius: 0.6rem;
+      font-size: 0.875rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .hp-input::placeholder { color: #475569; }
+    .hp-input:focus {
+      outline: none;
+      border-color: rgba(0,255,255,0.5);
+      box-shadow: 0 0 0 3px rgba(0,255,255,0.08);
+    }
+    .hp-input.input-error {
+      border-color: rgba(239,68,68,0.6) !important;
+      box-shadow: 0 0 0 3px rgba(239,68,68,0.08);
+    }
+    select.hp-input { cursor: pointer; }
+    option { background: #0f172a; }
+
+    /* ── Checkbox pills ── */
+    .check-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.4rem;
+      margin-bottom: 0.5rem;
+    }
+    .check-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(148,163,184,0.1);
+      border-radius: 0.5rem;
+      padding: 0.45rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+    .check-pill:hover { border-color: rgba(0,255,255,0.3); color: #e2e8f0; }
+    .check-pill input { accent-color: #00ffff; }
+
+    /* ── Generate button ── */
+    .generate-btn {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: 0.75rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      background: linear-gradient(135deg, #00ffff, #3b82f6, #818cf8);
+      background-size: 200% 200%;
+      background-position: 0% 50%;
+      color: #0a0a1a;
+      border: none;
+      cursor: pointer;
+      transition: background-position 0.5s ease, transform 0.2s, box-shadow 0.3s;
+      box-shadow: 0 4px 24px rgba(0,255,255,0.25);
+    }
+    .generate-btn:hover {
+      background-position: 100% 50%;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 32px rgba(0,255,255,0.35);
+    }
+    .generate-btn:active { transform: translateY(0); }
+    .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .regen-btn {
+      padding: 0.85rem 1rem;
+      border-radius: 0.75rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .regen-btn:hover {
+      background: rgba(0,255,255,0.07);
+      border-color: rgba(0,255,255,0.3);
+      color: #00ffff;
+    }
+
+    /* ── Results panel ── */
+    .results-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* ── Empty state ── */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+      text-align: center;
+      border: 1px dashed rgba(148,163,184,0.15);
+      border-radius: 1.25rem;
+      padding: 3rem 2rem;
+    }
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      opacity: 0.5;
+    }
+    .empty-state h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 0.5rem;
+    }
+    .empty-state p { color: #64748b; font-size: 0.875rem; max-width: 280px; line-height: 1.6; }
+
+    /* ── Summary card ── */
+    .summary-card {
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.12);
+      border-radius: 1.25rem;
+      padding: 1.5rem 2rem;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      backdrop-filter: blur(16px);
+    }
+    @media (max-width: 700px) { .summary-card { grid-template-columns: repeat(2,1fr); } }
+    .summary-item-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; margin-bottom: 0.3rem; }
+    .summary-item-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #00ffff, #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+    }
+    .summary-item-sub { font-size: 0.72rem; color: #475569; margin-top: 0.25rem; }
+
+    /* ── Content cards ── */
+    .content-card {
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.1);
+      border-radius: 1.25rem;
+      padding: 1.75rem 2rem;
+      backdrop-filter: blur(16px);
+    }
+    .card-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      margin-bottom: 0.25rem;
+    }
+    .card-subtitle { font-size: 0.75rem; color: #64748b; }
+
+    /* ── Progress bar ── */
+    .progress-track {
+      background: rgba(255,255,255,0.05);
+      border-radius: 9999px;
+      height: 6px;
+      overflow: hidden;
+      margin-top: 0.4rem;
+    }
+
+    /* ── Meal / exercise inner cards ── */
+    .inner-card {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(148,163,184,0.08);
+      border-radius: 0.875rem;
+      padding: 1rem 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .inner-card:hover { border-color: rgba(0,255,255,0.15); }
+
+    /* ── Action buttons ── */
+    .action-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+    }
+    .action-btn-green {
+      background: linear-gradient(135deg, #10b981, #22d3ee);
+      color: #052e16;
+    }
+    .action-btn-green:hover { opacity: 0.9; transform: translateY(-1px); }
+    .action-btn-red {
+      background: rgba(239,68,68,0.1);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+    }
+    .action-btn-red:hover { background: rgba(239,68,68,0.18); }
+
+    /* ── Exercise btn-xs ── */
+    .btn-xs {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.2rem 0.45rem;
+      font-size: 0.7rem;
+      border-radius: 0.35rem;
+      border: 1px solid rgba(148,163,184,0.15);
+      background: rgba(255,255,255,0.04);
+      color: #94a3b8;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-xs:hover { background: rgba(0,255,255,0.1); border-color: rgba(0,255,255,0.35); color: #e2e8f0; }
+    .btn-xs.danger:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #fca5a5; }
+
+    /* ── Exercise rows ── */
+    .exercise-row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .exercise-controls { display: flex; align-items: center; gap: 0.25rem; flex-shrink: 0; }
+    .add-exercise-row { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
+    .condition-note { font-size: 0.72rem; color: #00ffff; opacity: 0.8; margin-top: 0.35rem; }
+
+    /* ── Progress tracker ── */
+    .tracker-section {
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(148,163,184,0.1);
+      border-radius: 1.25rem;
+      padding: 2rem;
+      backdrop-filter: blur(16px);
+      margin: 2rem auto 0;
+      max-width: 1280px;
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+
+    /* ── Footer ── */
+    .site-footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.8rem;
+      color: #334155;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Neon nums (keep compat) ── */
+    .neon-num {
+      background: linear-gradient(90deg, #00ffff, #818cf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ── Coach notes ── */
+    #coachNotesCard {
+      background: rgba(15,23,42,0.8);
+      border: 1px solid rgba(0,255,255,0.12);
+      border-radius: 1.25rem;
+      padding: 1.5rem 2rem;
+      backdrop-filter: blur(16px);
+    }
+
+    /* ── Message box ── */
+    #messageBox .error-msg {
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fca5a5;
+      border-radius: 0.65rem;
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      margin-top: 0.75rem;
+      text-align: center;
+    }
+
+    /* ── Scrollbar ── */
+    .sidebar-body::-webkit-scrollbar { width: 4px; }
+    .sidebar-body::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-body::-webkit-scrollbar-thumb { background: rgba(0,255,255,0.2); border-radius: 9999px; }
+
+    /* fadeIn */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-in { animation: fadeInUp 0.5s ease forwards; }
+
+    /* Background */
+    .background {
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: linear-gradient(-45deg, #000000, #060910, #0d1424, #111827, #070d1a);
+      background-size: 400% 400%;
+      animation: darkGlow 25s ease infinite;
+      z-index: -1;
+    }
+    @keyframes darkGlow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+
+<body class="font-sans text-gray-100">
+  <div class="background"></div>
+
+  <!-- ══ AUTH SCREEN (shown until logged in) ══ -->
+  <div id="authScreen" class="auth-screen">
+    <div class="glass-card auth-card">
+      <h1 class="hero-title" style="font-size:1.6rem;margin-bottom:0.25rem;">BodyMath Fitness</h1>
+      <p class="text-muted" style="font-size:0.85rem;margin-bottom:1.5rem;">Log in to load your saved plans, or create an account to get started.</p>
+
+      <form id="loginForm" autocomplete="on">
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" class="input" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+        <div class="field-group" style="margin-bottom:0.5rem;">
+          <label class="field-label" for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" class="input" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <p id="loginError" class="auth-error"></p>
+        <button type="submit" class="btn gradient-btn" style="width:100%;margin-top:0.5rem;">Log In</button>
+        <p style="font-size:0.8rem;margin-top:1rem;text-align:center;">
+          <span class="text-muted">Don't have an account?</span>
+          <a href="#" id="showRegisterLink" class="auth-tab-link">Register</a>
+        </p>
+      </form>
+
+      <form id="registerForm" autocomplete="on" style="display:none;">
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="registerName">Full name</label>
+          <input id="registerName" type="text" class="input" placeholder="e.g. Sara Khan" autocomplete="name" required />
+        </div>
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="registerEmail">Email</label>
+          <input id="registerEmail" type="email" class="input" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="registerPassword">Password</label>
+          <input id="registerPassword" type="password" class="input" placeholder="At least 8 characters" autocomplete="new-password" required />
+        </div>
+        <div class="field-group" style="margin-bottom:0.5rem;">
+          <label class="field-label" for="registerConfirm">Confirm password</label>
+          <input id="registerConfirm" type="password" class="input" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+        <p id="registerError" class="auth-error"></p>
+        <button type="submit" class="btn gradient-btn" style="width:100%;margin-top:0.5rem;">Create Account</button>
+        <p style="font-size:0.8rem;margin-top:1rem;text-align:center;">
+          <span class="text-muted">Already have an account?</span>
+          <a href="#" id="showLoginLink" class="auth-tab-link">Log In</a>
+        </p>
+      </form>
+
+      <div class="auth-divider"><span>or</span></div>
+      <button type="button" id="continueGuestBtn" class="btn ghost-btn" style="width:100%;">Continue as Guest</button>
+      <p style="font-size:0.72rem;color:#475569;margin-top:0.6rem;text-align:center;">Guest mode doesn't save anything — you'll need to log in again next time.</p>
+    </div>
+  </div>
+
+  <!-- ══ APP (hidden until logged in) ══ -->
+  <div id="appRoot" style="display:none;">
+
+  <div class="logged-in-bar">
+    <span id="userNameLabel"></span>
+    <button id="topRegisterBtn" class="btn gradient-btn" style="padding:0.35rem 0.9rem;font-size:0.78rem;display:none;">Register</button>
+    <button id="logoutBtn" class="btn ghost-btn" style="padding:0.35rem 0.8rem;font-size:0.78rem;">Log Out</button>
+  </div>
+
+  <!-- ══ HERO ══ -->
+  <div class="hero-section">
+    
+    <h1 class="hero-title">BodyMath Fitness</h1>
+    <p class="hero-sub">Your personal nutrition coach and workout planner — built for your body, budget, and goals.</p>
+    <div class="hero-stats">
+      <div>
+        <div class="hero-stat-num">5+</div>
+        <div class="hero-stat-label">Workout Splits</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">₨5k–12k</div>
+        <div class="hero-stat-label">Budget Range</div>
+      </div>
+      <div>
+        <div class="hero-stat-num">12-Wk</div>
+        <div class="hero-stat-label">Progression Plan</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ APP LAYOUT ══ -->
+  <div class="app-layout">
+
+    <!-- ── Sidebar Form ── -->
+    <aside>
+      <form id="userForm" class="sidebar-form">
+        <div class="sidebar-header">
+          <h2>Build Your Plan</h2>
+          <p style="font-size:0.75rem;color:#64748b;margin-top:0.25rem;">Fill in your profile — regenerate anytime.</p>
+        </div>
+
+        <div class="sidebar-body">
+
+          <!-- Basics -->
+          <div class="form-section">
+            <div class="section-label">Basics</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+              <div class="field-group" style="margin-bottom:0">
+                <label for="age">Age</label>
+                <input id="age" type="number" min="14" max="90" class="hp-input input" placeholder="e.g. 22" />
+              </div>
+              <div class="field-group" style="margin-bottom:0">
+                <label for="gender">Gender</label>
+                <select id="gender" class="hp-input input">
+                  <option value="">Select</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+              <div class="field-group" style="margin-bottom:0">
+                <label>Height</label>
+                <div style="display:flex;gap:0.4rem;">
+                  <input id="heightFeet" type="number" min="3" max="8" class="hp-input input" placeholder="ft" style="flex:1;min-width:0" />
+                  <input id="heightInches" type="number" min="0" max="11" class="hp-input input" placeholder="in" style="flex:1;min-width:0" />
+                </div>
+              </div>
+              <div class="field-group" style="margin-bottom:0">
+                <label for="weight">Weight (kg)</label>
+                <input id="weight" type="number" min="25" max="250" class="hp-input input" placeholder="e.g. 70" />
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="targetWeight">Target weight (kg) <span style="color:#475569;">— optional</span></label>
+              <input id="targetWeight" type="number" min="25" max="250" class="hp-input input" placeholder="e.g. 65" />
+            </div>
+          </div>
+
+          <!-- Training -->
+          <div class="form-section">
+            <div class="section-label">Training</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+              <div class="field-group" style="margin-bottom:0">
+                <label for="activity">Activity level</label>
+                <select id="activity" class="hp-input input">
+                  <option value="">Select</option>
+                  <option>Sedentary</option>
+                  <option>Light</option>
+                  <option>Moderate</option>
+                  <option>Active</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0">
+                <label for="experience">Experience</label>
+                <select id="experience" class="hp-input input">
+                  <option value="">Select</option>
+                  <option>Beginner</option>
+                  <option>Intermediate</option>
+                  <option>Advanced</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+              <div class="field-group" style="margin-bottom:0">
+                <label for="goal">Goal</label>
+                <select id="goal" class="hp-input input">
+                  <option value="">Select</option>
+                  <option value="Recomp">Recomp</option>
+                  <option value="Fat Loss">Fat Loss</option>
+                  <option value="Muscle Gain">Muscle Gain</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0">
+                <label for="workoutType">Split</label>
+                <select id="workoutType" class="hp-input input">
+                  <option value="">Select</option>
+                  <option value="PPL">PPL (6-Day)</option>
+                  <option value="BroSplit">Muscle Split (5-Day)</option>
+                  <option value="UpperLower">Upper/Lower (4-Day)</option>
+                  <option value="FullBody">Full Body (3-Day)</option>
+                  <option value="Home">Home (3-Day)</option>
+                </select>
+              </div>
+            </div>
+            <p id="splitNote" class="condition-note" style="display:none;"></p>
+          </div>
+
+          <!-- Health -->
+          <div class="form-section">
+            <div class="section-label">Health & Diet</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:0.6rem;">
+              <div class="field-group" style="margin-bottom:0">
+                <label for="dietPref">Diet preference</label>
+                <select id="dietPref" class="hp-input input">
+                  <option value="nonveg">Non-Veg</option>
+                  <option value="veg">Vegetarian</option>
+                  <option value="keto">Keto</option>
+                </select>
+              </div>
+              <div class="field-group" style="margin-bottom:0">
+                <label for="equipment">Equipment</label>
+                <select id="equipment" class="hp-input input">
+                  <option value="full">Full gym</option>
+                  <option value="home">Home / Dumbbells</option>
+                  <option value="bodyweight">Bodyweight</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-group">
+              <label for="allergies">Allergies / intolerances <span style="color:#475569;">— optional</span></label>
+              <input id="allergies" type="text" class="hp-input input" placeholder="e.g. dairy, nuts" />
+            </div>
+            <label style="font-size:0.72rem;color:#64748b;display:block;margin-bottom:0.5rem;">Medical conditions</label>
+            <div class="check-grid">
+              <label class="check-pill"><input type="checkbox" value="diabetes" class="condition-checkbox" /><span>Diabetes</span></label>
+              <label class="check-pill"><input type="checkbox" value="heart" class="condition-checkbox" /><span>Heart disease</span></label>
+              <label class="check-pill"><input type="checkbox" value="hypertension" class="condition-checkbox" /><span>Hypertension</span></label>
+              <label class="check-pill"><input type="checkbox" value="joint" class="condition-checkbox" /><span>Joint issues</span></label>
+              <label class="check-pill"><input type="checkbox" value="thyroid" class="condition-checkbox" /><span>Thyroid</span></label>
+              <label class="check-pill"><input type="checkbox" value="pcos" class="condition-checkbox" /><span>PCOS</span></label>
+            </div>
+            <p style="font-size:0.68rem;color:#475569;margin-top:0.4rem;">Plans adapt automatically — not medical advice, confirm with your doctor.</p>
+            <label class="check-pill" style="margin-top:0.6rem;display:inline-flex;">
+              <input type="checkbox" id="showSupplements" />
+              <span>Show supplement suggestions</span>
+            </label>
+          </div>
+
+          <!-- Budget -->
+          <div class="form-section">
+            <div class="section-label">Budget</div>
+            <div class="field-group">
+              <label for="budget">Monthly food budget (PKR)</label>
+              <input id="budget" type="number" min="3000" max="300000" class="hp-input input" placeholder="e.g. 10000" />
+              <p style="font-size:0.7rem;color:#475569;margin-top:0.35rem;">₨5k–8k Low · ₨8k–12k Medium · ₨12k+ High</p>
+            </div>
+          </div>
+
+          <div id="messageBox" style="margin-top:0.25rem;"></div>
+
+          <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+            <button id="generateBtn" type="button" class="generate-btn">Generate Plan</button>
+            <button id="regenBtn" type="button" class="regen-btn" title="Regenerate">🔁</button>
+          </div>
+
+          <p style="font-size:0.68rem;color:#475569;text-align:center;margin-top:0.75rem;">Export your plan to keep it — it won't reload automatically</p>
+
+        </div><!-- /sidebar-body -->
+      </form>
+    </aside>
+
+    <!-- ── Results Panel ── -->
+    <div class="results-panel">
+
+      <!-- Empty state -->
+      <div id="emptyState" class="empty-state">
+        <div class="empty-state-icon">🎯</div>
+        <h3>Your plan will appear here</h3>
+        <p>Fill in your profile on the left and click Generate Plan to get your personalised meal and workout plan.</p>
+      </div>
+
+      <!-- Summary Card -->
+      <div id="summaryCard" class="summary-card hidden">
+        <div>
+          <div class="summary-item-label">Calories / day</div>
+          <div id="calTarget" class="summary-item-val">— kcal</div>
+          <div id="calDetail" class="summary-item-sub">—</div>
+        </div>
+        <div>
+          <div class="summary-item-label">Protein target</div>
+          <div id="proteinTarget" class="summary-item-val">— g</div>
+          <div class="summary-item-sub">~1.8 g/kg bodyweight</div>
+        </div>
+        <div>
+          <div class="summary-item-label">Fat target</div>
+          <div id="fatTarget" class="summary-item-val">— g</div>
+          <div class="summary-item-sub">~25% of calories</div>
+        </div>
+        <div>
+          <div class="summary-item-label">Carbohydrate target</div>
+          <div id="carbsTarget" class="summary-item-val">— g</div>
+          <div class="summary-item-sub">remaining calories</div>
+        </div>
+        <div>
+          <div class="summary-item-label">Budget tier</div>
+          <div id="budgetTier" class="summary-item-val" style="font-size:1.2rem;">—</div>
+          <div id="estCost" class="summary-item-sub">Est. daily cost: — PKR</div>
+        </div>
+        <div>
+          <div class="summary-item-label">Water / day</div>
+          <div id="waterTarget" class="summary-item-val">— L</div>
+          <div class="summary-item-sub">stay hydrated</div>
+        </div>
+      </div>
+
+      <!-- Coach Notes -->
+      <div id="coachNotesCard" class="hidden">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
+          <span style="font-size:1.25rem;">🧑‍⚕️</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:#e2e8f0;font-size:0.95rem;">Coach's Notes</span>
+        </div>
+        <p id="coachNotes" style="font-size:0.875rem;color:#94a3b8;line-height:1.7;"></p>
+        <div id="supplementNotes" style="font-size:0.8rem;color:#64748b;margin-top:0.75rem;"></div>
+      </div>
+
+      <!-- Meal Plan Card -->
+      <div id="mealPlanCard" class="content-card hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">
+          <div>
+            <div class="card-title">🍽️ Your Meal Plan</div>
+            <div class="card-subtitle">5 meals · Portions shown in grams/ml or practical serving counts</div>
+          </div>
+        </div>
+        <div id="dietNotes" style="margin-bottom:0.75rem;"></div>
+        <div id="mealsContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
+        <div style="margin-top:1.25rem;border-top:1px solid rgba(255,255,255,0.05);padding-top:1rem;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem;">
+            <span style="font-size:0.8rem;color:#64748b;font-weight:500;">Daily totals</span>
+            <span id="dailyTotals" style="font-size:0.8rem;color:#94a3b8;">—</span>
+          </div>
+          <div style="margin-bottom:0.5rem;">
+            <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#64748b;margin-bottom:0.25rem;"><span>Calories</span></div>
+            <div class="progress-track"><div id="calBar" style="height:100%;border-radius:9999px;background:linear-gradient(90deg,#ef4444,#f59e0b);width:0%;transition:width 0.8s ease;"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:#64748b;margin-bottom:0.25rem;"><span>Protein</span></div>
+            <div class="progress-track"><div id="protBar" style="height:100%;border-radius:9999px;background:linear-gradient(90deg,#6366f1,#ec4899);width:0%;transition:width 0.8s ease;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workout Card -->
+      <div id="workoutCard" class="content-card hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem;">
+          <div>
+            <div class="card-title" id="workoutTitle">🏋️ Your Workout Plan</div>
+            <div id="restDaysNote" class="card-subtitle">Abs & core on leg days</div>
+          </div>
+        </div>
+        <div id="workoutNotes" style="margin-bottom:0.75rem;"></div>
+        <p style="font-size:0.72rem;color:#475569;margin-bottom:1rem;">Edit any day — swap, remove, reorder, or add exercises. Changes save automatically.</p>
+        <div id="workoutContainer" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;"></div>
+      </div>
+
+      <!-- Weekly Progression -->
+      <div id="weeklyProgression" class="content-card hidden"></div>
+
+      <!-- Action Buttons -->
+      <div id="actionButtons" style="display:none;gap:0.75rem;flex-wrap:wrap;">
+        <button id="exportPdf" class="action-btn action-btn-green">⬇ Download PDF</button>
+        <button id="exportDocx" class="action-btn action-btn-green">⬇ Download Word (.docx)</button>
+        <button id="clearSaved" class="action-btn action-btn-red" style="flex:0.5;">Clear Data</button>
+      </div>
+
+    </div><!-- /results-panel -->
+  </div><!-- /app-layout -->
+
+  <!-- Progress Tracker -->
+  <div class="tracker-section" style="max-width:1280px;margin:0 auto 0;padding-left:2rem;padding-right:2rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:0.5rem;">
+      <div class="card-title">📊 Progress Tracker</div>
+      <div id="progressAccountLabel" style="font-size:0.78rem;color:#64748b;"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:0.75rem;align-items:end;flex-wrap:wrap;">
+      <div>
+        <label style="font-size:0.72rem;color:#64748b;display:block;margin-bottom:0.3rem;">Waist (inches)</label>
+        <input id="waist" placeholder="e.g. 32" type="number" min="20" max="60" step="0.1" class="hp-input input" style="width:100%;" />
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:#64748b;display:block;margin-bottom:0.3rem;">Abs rating (1–10)</label>
+        <input id="absRating" placeholder="e.g. 5" type="number" min="1" max="10" class="hp-input input" style="width:100%;" />
+      </div>
+      <div>
+        <label style="font-size:0.72rem;color:#64748b;display:block;margin-bottom:0.3rem;">Progress photo</label>
+        <input id="progPhoto" type="file" accept="image/*" style="font-size:0.75rem;color:#94a3b8;width:100%;" />
+      </div>
+      <button id="saveProgress" class="action-btn action-btn-green" style="flex:none;white-space:nowrap;">Save Entry</button>
+    </div>
+    <textarea id="reflection" placeholder="Weekly reflection — how did training feel? Any wins?" style="width:100%;margin-top:1rem;padding:0.75rem 1rem;border-radius:0.75rem;background:rgba(0,0,0,0.3);border:1px solid rgba(148,163,184,0.1);font-size:0.85rem;color:#e2e8f0;font-family:'Inter',sans-serif;resize:vertical;min-height:80px;"></textarea>
+    <div id="progressList" style="margin-top:1.5rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem;"></div>
+  </div>
+
+  <div class="site-footer">© 2026 BodyMath Fitness — built for consistency & results</div>
+
+  </div><!-- /appRoot -->
+
+  <script src="app.js"></script>
+
+  <script>
+    // Hide empty state and show action buttons properly after generate
+    const _origReveal = window.__hpReveal;
+    // Patch: watch for summaryCard becoming visible to hide empty state
+    const emptyState = document.getElementById('emptyState');
+    const observer = new MutationObserver(() => {
+      const summaryCard = document.getElementById('summaryCard');
+      if (summaryCard && !summaryCard.classList.contains('hidden')) {
+        if (emptyState) emptyState.style.display = 'none';
+        const ab = document.getElementById('actionButtons');
+        if (ab) ab.style.display = 'flex';
+      }
+    });
+    const summaryCard = document.getElementById('summaryCard');
+    if (summaryCard) observer.observe(summaryCard, { attributes: true, attributeFilter: ['class'] });
+  </script>
+</body>
+</html>
