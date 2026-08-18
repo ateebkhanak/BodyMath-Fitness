@@ -14,7 +14,7 @@
   // routes (see server/). Relative path assumes the API is served from the
   // same origin as this page. If it's hosted elsewhere, change this to the
   // full origin, e.g. 'https://your-api.example.com'.
-  const API_BASE = '/api';
+  const API_BASE = 'https://bodymath-fitness-production.up.railway.app/api';
   const AI_PROXY_ENDPOINT = `${API_BASE}/generate-plan`;
 
   const BUDGET_TIERS = {
@@ -194,7 +194,11 @@
     registerFormEl = $('registerForm'), registerNameEl = $('registerName'), registerEmailEl = $('registerEmail'),
     registerPasswordEl = $('registerPassword'), registerConfirmEl = $('registerConfirm'), registerErrorEl = $('registerError'),
     showRegisterLinkEl = $('showRegisterLink'), showLoginLinkEl = $('showLoginLink'),
-    logoutBtnEl = $('logoutBtn'), userNameLabelEl = $('userNameLabel'), guestBtnEl = $('continueGuestBtn'), topRegisterBtnEl = $('topRegisterBtn');
+    logoutBtnEl = $('logoutBtn'), userNameLabelEl = $('userNameLabel'), guestBtnEl = $('continueGuestBtn'), topRegisterBtnEl = $('topRegisterBtn'),
+    forgotFormEl = $('forgotForm'), forgotEmailEl = $('forgotEmail'), forgotErrorEl = $('forgotError'), forgotSuccessEl = $('forgotSuccess'),
+    showForgotLinkEl = $('showForgotLink'), backToLoginFromForgotLinkEl = $('backToLoginFromForgotLink'),
+    resetFormEl = $('resetForm'), resetPasswordEl = $('resetPassword'), resetConfirmEl = $('resetConfirm'),
+    resetErrorEl = $('resetError'), resetSuccessEl = $('resetSuccess'), backToLoginFromResetLinkEl = $('backToLoginFromResetLink');
 
   const generateBtn = $('generateBtn'), regenBtn = $('regenBtn');
   const calTargetEl = $('calTarget'), calDetailEl = $('calDetail'), proteinTargetEl = $('proteinTarget'), fatTargetEl = $('fatTarget'), carbsTargetEl = $('carbsTarget');
@@ -313,6 +317,71 @@
       if (!res.ok) { loginErrorEl.textContent = body.error || 'Login failed.'; return; }
       await onAuthSuccess(body.token, body.user);
     } catch (err) { console.error(err); loginErrorEl.textContent = 'Could not reach the server — please try again.'; }
+  }
+
+  // Stores the reset token pulled from the URL (?reset=...) when the user
+  // opens the emailed link, so the reset form can submit it later.
+  let pendingResetToken = null;
+
+  async function forgotPassword(e) {
+    e.preventDefault();
+    forgotErrorEl.textContent = '';
+    forgotSuccessEl.textContent = '';
+    const email = forgotEmailEl.value.trim();
+    if (!email) { forgotErrorEl.textContent = 'Please enter your email.'; return; }
+    try {
+      const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const body = await res.json();
+      // Always show the generic success message the backend returns —
+      // never reveal whether the email is actually registered.
+      forgotSuccessEl.textContent = body.message || 'If an account exists for that email, a reset link has been sent.';
+      if (forgotFormEl) forgotFormEl.reset();
+    } catch (err) {
+      console.error(err);
+      forgotErrorEl.textContent = 'Could not reach the server — please try again.';
+    }
+  }
+
+  async function resetPassword(e) {
+    e.preventDefault();
+    resetErrorEl.textContent = '';
+    resetSuccessEl.textContent = '';
+    const newPassword = resetPasswordEl.value;
+    const confirmPassword = resetConfirmEl.value;
+    if (!newPassword || newPassword.length < 8) { resetErrorEl.textContent = 'Password must be at least 8 characters.'; return; }
+    if (newPassword !== confirmPassword) { resetErrorEl.textContent = 'Passwords do not match.'; return; }
+    if (!pendingResetToken) { resetErrorEl.textContent = 'Missing or invalid reset link — please request a new one.'; return; }
+    try {
+      const res = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: pendingResetToken, newPassword })
+      });
+      const body = await res.json();
+      if (!res.ok) { resetErrorEl.textContent = body.error || 'Could not reset your password.'; return; }
+      resetSuccessEl.textContent = body.message || 'Password updated — you can now log in.';
+      if (resetFormEl) resetFormEl.reset();
+      pendingResetToken = null;
+      // Clean the token out of the URL so a refresh doesn't re-show this form.
+      try { window.history.replaceState({}, '', window.location.pathname); } catch (e) { /* ignore */ }
+      setTimeout(showLoginTab, 1500);
+    } catch (err) {
+      console.error(err);
+      resetErrorEl.textContent = 'Could not reach the server — please try again.';
+    }
+  }
+
+  // If the page was opened from the emailed reset link (?reset=TOKEN),
+  // capture the token and show the "set new password" form immediately.
+  function checkForResetTokenInUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('reset');
+    if (token) {
+      pendingResetToken = token;
+      showResetTab();
+    }
   }
 
   async function onAuthSuccess(token, user) {
@@ -1781,7 +1850,7 @@ ${schemaHint}`;
 
     if (data.coachNotes) {
       doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(15, 23, 42);
-      doc.text("Coach's Notes", margin, y);
+      doc.text("Personalized Guidance", margin, y);
       y += 14;
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(70, 80, 95);
       const lines = doc.splitTextToSize(stripEmoji(data.coachNotes), pageWidth - margin * 2);
@@ -1902,7 +1971,7 @@ ${schemaHint}`;
     ];
 
     if (data.coachNotes) {
-      children.push(new Paragraph({ text: "Coach's Notes", heading: HeadingLevel.HEADING_1 }));
+      children.push(new Paragraph({ text: "Personalized Guidance", heading: HeadingLevel.HEADING_1 }));
       children.push(new Paragraph({ text: stripEmoji(data.coachNotes), spacing: { after: 300 } }));
     }
 
@@ -1994,17 +2063,35 @@ ${schemaHint}`;
   // ============================================================
   // Auth screen tab switching (Login <-> Register)
   // ============================================================
-  function showRegisterTab() {
+  function hideAllAuthForms() {
     if (loginFormEl) loginFormEl.style.display = 'none';
+    if (registerFormEl) registerFormEl.style.display = 'none';
+    if (forgotFormEl) forgotFormEl.style.display = 'none';
+    if (resetFormEl) resetFormEl.style.display = 'none';
+  }
+  function showRegisterTab() {
+    hideAllAuthForms();
     if (registerFormEl) registerFormEl.style.display = '';
     if (loginErrorEl) loginErrorEl.textContent = '';
     if (registerErrorEl) registerErrorEl.textContent = '';
   }
   function showLoginTab() {
-    if (registerFormEl) registerFormEl.style.display = 'none';
+    hideAllAuthForms();
     if (loginFormEl) loginFormEl.style.display = '';
     if (loginErrorEl) loginErrorEl.textContent = '';
     if (registerErrorEl) registerErrorEl.textContent = '';
+  }
+  function showForgotTab() {
+    hideAllAuthForms();
+    if (forgotFormEl) forgotFormEl.style.display = '';
+    if (forgotErrorEl) forgotErrorEl.textContent = '';
+    if (forgotSuccessEl) forgotSuccessEl.textContent = '';
+  }
+  function showResetTab() {
+    hideAllAuthForms();
+    if (resetFormEl) resetFormEl.style.display = '';
+    if (resetErrorEl) resetErrorEl.textContent = '';
+    if (resetSuccessEl) resetSuccessEl.textContent = '';
   }
 
   generateBtn.addEventListener("click", generateAll);
@@ -2024,6 +2111,13 @@ ${schemaHint}`;
   if (guestBtnEl) guestBtnEl.addEventListener("click", continueAsGuest);
   if (topRegisterBtnEl) topRegisterBtnEl.addEventListener("click", () => { logoutUser(); showRegisterTab(); });
 
+  if (forgotFormEl) forgotFormEl.addEventListener("submit", forgotPassword);
+  if (resetFormEl) resetFormEl.addEventListener("submit", resetPassword);
+  if (showForgotLinkEl) showForgotLinkEl.addEventListener("click", e => { e.preventDefault(); showForgotTab(); });
+  if (backToLoginFromForgotLinkEl) backToLoginFromForgotLinkEl.addEventListener("click", e => { e.preventDefault(); showLoginTab(); });
+  if (backToLoginFromResetLinkEl) backToLoginFromResetLinkEl.addEventListener("click", e => { e.preventDefault(); showLoginTab(); });
+
+  checkForResetTokenInUrl();
   document.addEventListener("DOMContentLoaded", initAuth);
   if (document.readyState !== 'loading') initAuth();
   applyExperienceSplitConstraints(true);

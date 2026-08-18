@@ -41,4 +41,17 @@ db.exec(`
   );
 `);
 
+// ------------------------------------------------------------
+// Migration: add password-reset columns if this DB was created before
+// the forgot-password feature existed. Safe to run on every startup —
+// it checks first and only alters the table if a column is missing.
+// ------------------------------------------------------------
+const userColumns = db.prepare('PRAGMA table_info(users)').all().map(c => c.name);
+if (!userColumns.includes('reset_token_hash')) {
+  db.exec('ALTER TABLE users ADD COLUMN reset_token_hash TEXT');
+}
+if (!userColumns.includes('reset_token_expires')) {
+  db.exec('ALTER TABLE users ADD COLUMN reset_token_expires INTEGER');
+}
+
 module.exports = db;

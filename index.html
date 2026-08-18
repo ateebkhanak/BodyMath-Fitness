@@ -494,9 +494,46 @@
         </div>
         <p id="loginError" class="auth-error"></p>
         <button type="submit" class="btn gradient-btn" style="width:100%;margin-top:0.5rem;">Log In</button>
-        <p style="font-size:0.8rem;margin-top:1rem;text-align:center;">
+        <p style="font-size:0.78rem;margin-top:0.75rem;text-align:right;">
+          <a href="#" id="showForgotLink" class="auth-tab-link">Forgot password?</a>
+        </p>
+        <p style="font-size:0.8rem;margin-top:0.5rem;text-align:center;">
           <span class="text-muted">Don't have an account?</span>
           <a href="#" id="showRegisterLink" class="auth-tab-link">Register</a>
+        </p>
+      </form>
+
+      <!-- Forgot password: request a reset link -->
+      <form id="forgotForm" autocomplete="on" style="display:none;">
+        <p class="text-muted" style="font-size:0.82rem;margin-bottom:1rem;">Enter your account email and we'll send you a link to reset your password.</p>
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="forgotEmail">Email</label>
+          <input id="forgotEmail" type="email" class="input" placeholder="you@example.com" autocomplete="email" required />
+        </div>
+        <p id="forgotError" class="auth-error"></p>
+        <p id="forgotSuccess" class="auth-error" style="color:#00ff99;"></p>
+        <button type="submit" class="btn gradient-btn" style="width:100%;margin-top:0.5rem;">Send Reset Link</button>
+        <p style="font-size:0.8rem;margin-top:1rem;text-align:center;">
+          <a href="#" id="backToLoginFromForgotLink" class="auth-tab-link">Back to Log In</a>
+        </p>
+      </form>
+
+      <!-- Reset password: opened via the emailed link (?reset=TOKEN) -->
+      <form id="resetForm" autocomplete="off" style="display:none;">
+        <p class="text-muted" style="font-size:0.82rem;margin-bottom:1rem;">Choose a new password for your account.</p>
+        <div class="field-group" style="margin-bottom:0.75rem;">
+          <label class="field-label" for="resetPassword">New password</label>
+          <input id="resetPassword" type="password" class="input" placeholder="At least 8 characters" autocomplete="new-password" required />
+        </div>
+        <div class="field-group" style="margin-bottom:0.5rem;">
+          <label class="field-label" for="resetConfirm">Confirm new password</label>
+          <input id="resetConfirm" type="password" class="input" placeholder="••••••••" autocomplete="new-password" required />
+        </div>
+        <p id="resetError" class="auth-error"></p>
+        <p id="resetSuccess" class="auth-error" style="color:#00ff99;"></p>
+        <button type="submit" class="btn gradient-btn" style="width:100%;margin-top:0.5rem;">Set New Password</button>
+        <p style="font-size:0.8rem;margin-top:1rem;text-align:center;">
+          <a href="#" id="backToLoginFromResetLink" class="auth-tab-link">Back to Log In</a>
         </p>
       </form>
 
@@ -772,7 +809,7 @@
       <div id="coachNotesCard" class="hidden">
         <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;">
           <span style="font-size:1.25rem;">🧑‍⚕️</span>
-          <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:#e2e8f0;font-size:0.95rem;">Coach's Notes</span>
+          <span style="font-family:'Space Grotesk',sans-serif;font-weight:600;color:#e2e8f0;font-size:0.95rem;">Personalized Guidance</span>
         </div>
         <p id="coachNotes" style="font-size:0.875rem;color:#94a3b8;line-height:1.7;"></p>
         <div id="supplementNotes" style="font-size:0.8rem;color:#64748b;margin-top:0.75rem;"></div>
